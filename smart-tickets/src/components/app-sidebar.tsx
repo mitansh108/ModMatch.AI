@@ -9,6 +9,8 @@ import {
   Users,
 } from "lucide-react"
 import { useEffect, useState } from "react"
+import { API_BASE_URL } from "@/utils/api";
+
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -44,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const token = localStorage.getItem("token")
     if (!token) return
 
-    fetch("http://localhost:3000/api/auth/me", {
+    fetch(`${API_BASE_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

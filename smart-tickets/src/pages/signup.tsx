@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import Head from "next/head"
+import { API_BASE_URL } from "@/utils/api"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -14,14 +15,14 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState("user") // default to user
   const [error, setError] = useState("")
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     try {
-      const res = await fetch(`${apiUrl}/api/auth/signup`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

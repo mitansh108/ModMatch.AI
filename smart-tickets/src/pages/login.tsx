@@ -6,20 +6,21 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import Head from "next/head"
+import { API_BASE_URL } from "@/utils/api"
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     try {
-      const res = await fetch(`${apiUrl}/api/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

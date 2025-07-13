@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { API_BASE_URL } from "@/utils/api"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,7 +44,7 @@ export default function CreateTicketPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/tickets", {
+      const res = await fetch(`${API_BASE_URL}/api/tickets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
