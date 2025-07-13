@@ -62,20 +62,23 @@ export default function AdminTicketsPage() {
 
   const closeTicket = async (ticketId: string) => {
     try {
-      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets/${ticketId}", {
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ status: "closed" }),
-      })
-      if (!res.ok) throw new Error("Failed to close ticket")
-      await fetchTickets()
+        body: JSON.stringify({ status: "CLOSED" }), // also use uppercase to match your backend logic
+      });
+  
+      if (!res.ok) throw new Error("Failed to close ticket");
+  
+      await fetchTickets(); // refresh ticket list
     } catch (err) {
-      console.error("Error closing ticket:", err)
+      console.error("Error closing ticket:", err);
     }
-  }
+  };
+  
 
   useEffect(() => {
     fetchTickets()
