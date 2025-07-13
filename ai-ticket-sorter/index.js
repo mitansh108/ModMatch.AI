@@ -12,13 +12,24 @@ dotenv.config();
 import { onTicketCreated } from "./inngest/functions/on-ticket.js"
 const PORT = process.env.PORT || 3000
 const app = express()
-app.use(cors())
+app.use(
+    cors({
+        origin: ["https://modmatch.vercel.app", "http://localhost:3000"], // ✅ Vercel frontend domain
+      methods: ["GET", "POST", "PATCH", "DELETE"],
+      credentials: true,
+    })
+  );
+  
+
+
+
 app.use(express.json())
 
 app.use("/api/auth", userRoutes);
 
 app.use("/api/auth", userRoutes);
 app.use("/api/tickets", ticketRoutes);
+
 
 app.use(
 
