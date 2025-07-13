@@ -1,3 +1,6 @@
-import {Inngest} from "inngest"
+import { Inngest } from "inngest";
 
-export const inngest = new Inngest({id: "ticketing-system"});
+export const inngest = new Inngest({
+  name: "ModMatch",
+  eventKey: process.env.INNGEST_EVENT_KEY, // ✅ must be here
+});

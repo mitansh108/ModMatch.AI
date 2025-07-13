@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000
 const app = express()
 app.use(
     cors({
-        origin: ["https://modmatch.vercel.app", "http://localhost:3000", "https://mod-match-ai.vercel.app"], // ✅ Vercel frontend domain
+        origin: ["https://modmatch.vercel.app", "http://localhost:3001", "https://mod-match-ai.vercel.app"], // ✅ Vercel frontend domain
       methods: ["GET", "POST", "PATCH", "DELETE"],
       credentials: true,
     })
