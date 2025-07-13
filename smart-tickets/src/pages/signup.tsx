@@ -14,13 +14,14 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState("user") // default to user
   const [error, setError] = useState("")
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     try {
-      const res = await fetch("http://localhost:3000/api/auth/signup", {
+      const res = await fetch(`${apiUrl}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
