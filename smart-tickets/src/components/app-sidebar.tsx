@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { API_BASE_URL } from "@/utils/api";
+
 
 
 import { NavMain } from "@/components/nav-main"
@@ -46,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const token = localStorage.getItem("token")
     if (!token) return
 
-    fetch(`${API_BASE_URL}/api/auth/me`, {
+    fetch("https://modmatch-ai.onrender.com/api/auth/me", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

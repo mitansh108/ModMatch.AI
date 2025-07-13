@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { API_BASE_URL } from "@/utils/api"
+
 import {
   SidebarProvider,
   SidebarInset,
@@ -44,7 +44,7 @@ export default function ManageUsersPage() {
     if (checking) return
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
+        const res = await fetch("https://modmatch-ai.onrender.com/api/auth/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -75,7 +75,7 @@ export default function ManageUsersPage() {
     if (!user) return
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/update-user`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/auth/update-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -14,12 +14,15 @@ const PORT = process.env.PORT || 3000
 const app = express()
 app.use(
     cors({
-        origin: ["https://modmatch.vercel.app", "http://localhost:3001", "https://mod-match-ai.vercel.app"], // ✅ Vercel frontend domain
+      origin: [
+        "https://modmatch-ai.onrender.com",     // optional if needed
+        "https://mod-match-ai.vercel.app",      // ✅ main frontend
+        "http://localhost:3001",                // for local testing
+      ],
       methods: ["GET", "POST", "PATCH", "DELETE"],
       credentials: true,
     })
   );
-  
 
 
 
@@ -45,7 +48,7 @@ mongoose
     .connect(process.env.MONGO_URI)
     .then(() =>{
         console.log("MongoDB connected");
-        app.listen(PORT, () => console.log(" Server at http://localhost:3000"));
+        app.listen(PORT, () => console.log(" Server"));
 
     })
     .catch((err) => console.error("MongoDB error: ", err))

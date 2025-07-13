@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
-import { API_BASE_URL } from "@/utils/api"
+
 import {
   SidebarProvider,
   SidebarInset,
@@ -34,7 +34,7 @@ export default function ModeratorTicketsPage() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -75,7 +75,7 @@ export default function ModeratorTicketsPage() {
 
   const handleDeleteTicket = async (ticketId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets/${ticketId}", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

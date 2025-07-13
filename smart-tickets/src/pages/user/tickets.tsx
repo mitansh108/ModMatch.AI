@@ -5,7 +5,7 @@ import { useRouter } from "next/router"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { API_BASE_URL } from "@/utils/api"
+
 
 interface Ticket {
   id: string
@@ -59,7 +59,7 @@ export default function UserTicketsPage() {
 
     const fetchTickets = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/tickets`, {
+        const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
           headers: {
             Authorization: `Bearer ${tokenStr}`,
           },

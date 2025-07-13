@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import Head from "next/head"
-import { API_BASE_URL } from "@/utils/api"
+
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

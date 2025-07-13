@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { API_BASE_URL } from "@/utils/api"
+
 
 import {
   SidebarProvider,
@@ -45,7 +45,7 @@ export default function ModeratorDashboardPage() {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/tickets`, {
+        const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

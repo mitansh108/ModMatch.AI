@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { API_BASE_URL } from "@/utils/api"
+
 
 import {
   SidebarProvider,
@@ -45,7 +45,7 @@ export default function AdminTicketsPage() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -62,7 +62,7 @@ export default function AdminTicketsPage() {
 
   const closeTicket = async (ticketId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets/${ticketId}", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

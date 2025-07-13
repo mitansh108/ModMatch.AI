@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { API_BASE_URL } from "@/utils/api"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   SidebarProvider,
@@ -47,7 +47,7 @@ export default function UserDashboardPage() {
     if (!token) return
 
     try {
-      const res = await fetch(`${API_BASE_URL}api/tickets`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -75,7 +75,7 @@ export default function UserDashboardPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets`, {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
