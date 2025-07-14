@@ -35,6 +35,7 @@ export default function ModeratorTicketsPage() {
   const [activeReply, setActiveReply] = useState<string | null>(null)
   const [replyMessage, setReplyMessage] = useState("")
   const [sendingReply, setSendingReply] = useState(false)
+  const [generatingAI, setGeneratingAI] = useState(false)
 
   const fetchTickets = async () => {
     try {
@@ -51,7 +52,6 @@ export default function ModeratorTicketsPage() {
 
       const assignedTickets = data.filter(
         (ticket: Ticket) =>
-          typeof ticket.assignedTo === "object" &&
           ticket.assignedTo?.email === email &&
           ticket.status?.toLowerCase() !== "closed"
       )
@@ -76,7 +76,6 @@ export default function ModeratorTicketsPage() {
         body: JSON.stringify({ message: replyMessage }),
       })
       if (!res.ok) throw new Error("Failed to send reply")
-
       setReplyMessage("")
       setActiveReply(null)
       await fetchTickets()
@@ -87,37 +86,25 @@ export default function ModeratorTicketsPage() {
     }
   }
 
-  const closeTicket = async (ticketId: string) => {
+  const generateAIReply = async (notes: string) => {
     try {
-      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
-        method: "PATCH",
+      setGeneratingAI(true)
+      const res = await fetch("https://modmatch-ai.onrender.com/api/ai/generate-reply", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ status: "CLOSED" }),
+        body: JSON.stringify({ notes }),
       })
-      if (!res.ok) throw new Error("Failed to close ticket")
-      await fetchTickets()
-    } catch (err) {
-      console.error("Error closing ticket:", err)
-    }
-  }
 
-  const flagToAdmin = async (ticketId: string) => {
-    try {
-      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ flagged: true }),
-      })
-      if (!res.ok) throw new Error("Failed to flag ticket")
-      await fetchTickets()
+      if (!res.ok) throw new Error("AI reply generation failed")
+      const data = await res.json()
+      setReplyMessage(data.reply)
     } catch (err) {
-      console.error("Error flagging ticket:", err)
+      console.error("AI generation error:", err)
+      alert("Failed to generate reply from AI.")
+    } finally {
+      setGeneratingAI(false)
     }
   }
 
@@ -160,16 +147,14 @@ export default function ModeratorTicketsPage() {
                   className="rounded-xl bg-muted/50 p-5 shadow hover:bg-muted transition"
                 >
                   <h3 className="font-semibold text-lg mb-1">{ticket.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {ticket.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">{ticket.description}</p>
 
                   <div className="text-sm space-y-1">
-                    <p><strong>Status:</strong> {ticket.status?.toUpperCase() ?? "Unknown"}</p>
+                    <p><strong>Status:</strong> {ticket.status?.toUpperCase()}</p>
                     <p><strong>Priority:</strong> {ticket.priority ?? "Not set"}</p>
                     <p><strong>Related Skills:</strong> {ticket.relatedSkills?.join(", ") || "None"}</p>
                     <p><strong>Helpful Notes:</strong> {ticket.helpfulNotes || "—"}</p>
-                    <p><strong>Assigned To:</strong> {ticket.assignedTo?.email || "Unassigned"}</p>
+                    <p><strong>Assigned To:</strong> {ticket.assignedTo?.email}</p>
                     <p className="text-xs text-muted-foreground">
                       Created At:{" "}
                       {ticket.createdAt
@@ -178,54 +163,43 @@ export default function ModeratorTicketsPage() {
                     </p>
                   </div>
 
-                  {ticket.status?.toLowerCase() !== "closed" && (
-                    <>
-                      <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setActiveReply((prev) => prev === ticket._id ? null : ticket._id)}
+                      className="text-sm px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {activeReply === ticket._id ? "Cancel Reply" : "Reply"}
+                    </button>
+                  </div>
+
+                  {activeReply === ticket._id && (
+                    <div className="mt-3 space-y-2">
+                      <textarea
+                        value={replyMessage}
+                        onChange={(e) => setReplyMessage(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        rows={3}
+                        placeholder="Type your reply..."
+                      />
+
+                      <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            setActiveReply((prev) =>
-                              prev === ticket._id ? null : ticket._id
-                            )
-                          }
-                          className="text-sm px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => sendReply(ticket._id)}
+                          disabled={sendingReply || replyMessage.trim() === ""}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                         >
-                          {activeReply === ticket._id ? "Cancel Reply" : "Reply"}
+                          {sendingReply ? "Sending..." : "Send Reply"}
                         </button>
 
                         <button
-                          onClick={() => closeTicket(ticket._id)}
-                          className="text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+                          onClick={() => generateAIReply(ticket.helpfulNotes || "")}
+                          disabled={generatingAI || !ticket.helpfulNotes}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
                         >
-                          Close
-                        </button>
-
-                        <button
-                          onClick={() => flagToAdmin(ticket._id)}
-                          className="text-sm px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white"
-                        >
-                          Flag to Admin
+                          {generatingAI ? "Thinking..." : "Reply with AI"}
                         </button>
                       </div>
-
-                      {activeReply === ticket._id && (
-                        <div className="mt-2 space-y-2">
-                          <textarea
-                            value={replyMessage}
-                            onChange={(e) => setReplyMessage(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded"
-                            rows={3}
-                            placeholder="Type your reply..."
-                          />
-                          <button
-                            onClick={() => sendReply(ticket._id)}
-                            disabled={sendingReply || replyMessage.trim() === ""}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
-                          >
-                            {sendingReply ? "Sending..." : "Send Reply"}
-                          </button>
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
                 </li>
               ))}
