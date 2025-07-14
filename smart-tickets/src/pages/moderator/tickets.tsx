@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
-
 import {
   SidebarProvider,
   SidebarInset,
@@ -31,6 +30,9 @@ type Ticket = {
 export default function ModeratorTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeReply, setActiveReply] = useState<string | null>(null)
+  const [replyMessage, setReplyMessage] = useState("")
+  const [sendingReply, setSendingReply] = useState(false)
 
   const fetchTickets = async () => {
     try {
@@ -42,11 +44,9 @@ export default function ModeratorTicketsPage() {
       if (!res.ok) throw new Error("Failed to fetch tickets")
       const data = await res.json()
 
-      // Get current user's email from localStorage
       const user = JSON.parse(localStorage.getItem("user") || "{}")
       const email = user.email
 
-      // Filter tickets assigned to current moderator
       const assignedTickets = data.filter(
         (ticket: Ticket) =>
           typeof ticket.assignedTo === "object" &&
@@ -54,7 +54,6 @@ export default function ModeratorTicketsPage() {
           "email" in ticket.assignedTo &&
           ticket.assignedTo.email === email
       )
-      
 
       setTickets(assignedTickets)
     } catch (err) {
@@ -64,38 +63,54 @@ export default function ModeratorTicketsPage() {
     }
   }
 
+  const handleReplyAndClose = async (ticketId: string) => {
+    if (!replyMessage.trim()) return
+    setSendingReply(true)
+    try {
+      const token = localStorage.getItem("token")
+
+      // Step 1: Send reply
+      const commentRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: replyMessage }),
+      })
+
+      if (!commentRes.ok) throw new Error("Failed to post comment")
+
+      // Step 2: Close the ticket
+      const closeRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "CLOSED" }),
+      })
+
+      if (!closeRes.ok) throw new Error("Failed to close ticket")
+
+      setReplyMessage("")
+      setActiveReply(null)
+      await fetchTickets()
+    } catch (err) {
+      console.error("Reply & Close failed:", err)
+    } finally {
+      setSendingReply(false)
+    }
+  }
+
   useEffect(() => {
     fetchTickets()
   }, [])
 
-  const handleReplyAndClose = (ticketId: string) => {
-    console.log("Reply & Close clicked for", ticketId)
-    // TODO: Show reply modal or handle ticket update
-  }
-
-  const handleDeleteTicket = async (ticketId: string) => {
-    try {
-      const res = await fetch("https://modmatch-ai.onrender.com/api/tickets/${ticketId}", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-
-      if (!res.ok) throw new Error("Failed to delete ticket")
-
-      setTickets((prev) => prev.filter((t) => t._id !== ticketId))
-    } catch (err) {
-      console.error("Error deleting ticket:", err)
-    }
-  }
-
   return (
     <SidebarProvider>
       <AppSidebar />
-
       <SidebarInset>
-        {/* Header */}
         <header className="flex h-16 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mx-2 h-4" />
@@ -112,7 +127,6 @@ export default function ModeratorTicketsPage() {
           </Breadcrumb>
         </header>
 
-        {/* Ticket list */}
         <div className="flex flex-1 flex-col gap-6 p-6">
           <h2 className="text-2xl font-bold">Your Tickets</h2>
 
@@ -138,22 +152,42 @@ export default function ModeratorTicketsPage() {
                       : "Unknown"}
                   </p>
 
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleReplyAndClose(ticket._id)}
-                    >
-                      Reply & Close
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteTicket(ticket._id)}
-                    >
-                      Close
-                    </Button>
-                  </div>
+                  {ticket.status?.toLowerCase() !== "closed" && (
+                    <>
+                      <div className="mt-4 flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setActiveReply((prev) =>
+                              prev === ticket._id ? null : ticket._id
+                            )
+                          }
+                        >
+                          {activeReply === ticket._id ? "Cancel" : "Reply & Close"}
+                        </Button>
+                      </div>
+
+                      {activeReply === ticket._id && (
+                        <div className="mt-2 space-y-2">
+                          <textarea
+                            value={replyMessage}
+                            onChange={(e) => setReplyMessage(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded"
+                            rows={3}
+                            placeholder="Type your reply..."
+                          />
+                          <Button
+                            onClick={() => handleReplyAndClose(ticket._id)}
+                            disabled={sendingReply}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            {sendingReply ? "Sending..." : "Send & Close"}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

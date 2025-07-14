@@ -78,6 +78,31 @@ export default function AdminTicketsPage() {
       console.error("Error closing ticket:", err);
     }
   };
+  const [activeReply, setActiveReply] = useState<string | null>(null)
+const [replyMessage, setReplyMessage] = useState("")
+const [sendingReply, setSendingReply] = useState(false)
+const sendReply = async (ticketId: string) => {
+  try {
+    setSendingReply(true)
+    const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ message: replyMessage }),
+    })
+    if (!res.ok) throw new Error("Failed to send reply")
+    setReplyMessage("")
+    setActiveReply(null)
+    await fetchTickets()
+  } catch (err) {
+    console.error("Error sending reply:", err)
+  } finally {
+    setSendingReply(false)
+  }
+}
+
   
 
   useEffect(() => {
@@ -144,28 +169,12 @@ export default function AdminTicketsPage() {
                   </p>
 
                   <div className="text-sm space-y-1">
-                    <p>
-                      <strong>Status:</strong>{" "}
-                      {ticket.status?.toLowerCase() === "in process"
-                        ? "In Process"
-                        : ticket.status?.toUpperCase() ?? "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Priority:</strong>{" "}
-                      {ticket.priority ?? "Not set"}
-                    </p>
-                    <p>
-                      <strong>Related Skills:</strong>{" "}
-                      {ticket.relatedSkills?.join(", ") || "None"}
-                    </p>
-                    <p>
-                      <strong>Helpful Notes:</strong>{" "}
-                      {ticket.helpfulNotes || "—"}
-                    </p>
-                    <p>
-                      <strong>Assigned To:</strong>{" "}
-                      {typeof ticket.assignedTo === "object" &&
-                      ticket.assignedTo !== null
+                    <p><strong>Status:</strong> {ticket.status?.toUpperCase() ?? "Unknown"}</p>
+                    <p><strong>Priority:</strong> {ticket.priority ?? "Not set"}</p>
+                    <p><strong>Related Skills:</strong> {ticket.relatedSkills?.join(", ") || "None"}</p>
+                    <p><strong>Helpful Notes:</strong> {ticket.helpfulNotes || "—"}</p>
+                    <p><strong>Assigned To:</strong> 
+                      {typeof ticket.assignedTo === "object" && ticket.assignedTo !== null
                         ? ticket.assignedTo.email
                         : ticket.assignedTo ?? "Unassigned"}
                     </p>
@@ -178,12 +187,50 @@ export default function AdminTicketsPage() {
                   </div>
 
                   {ticket.status?.toLowerCase() !== "closed" && (
-                    <button
-                      onClick={() => closeTicket(ticket._id)}
-                      className="mt-4 text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                    >
-                      Close Ticket
-                    </button>
+                    <>
+                      <button
+                        onClick={() => closeTicket(ticket._id)}
+                        className="mt-4 text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                      >
+                        Close Ticket
+                      </button>
+
+                      <div className="mt-2">
+                        <button
+                          onClick={() =>
+                            setActiveReply((prev) => prev === ticket._id ? null : ticket._id)
+                          }
+                          className={`text-sm px-3 py-1 rounded text-white mt-2 ${
+                            ticket.priority === "high"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : ticket.priority === "medium"
+                              ? "bg-yellow-500 hover:bg-yellow-600"
+                              : "bg-green-600 hover:bg-green-700"
+                          }`}
+                        >
+                          {activeReply === ticket._id ? "Cancel Reply" : "Reply"}
+                        </button>
+
+                        {activeReply === ticket._id && (
+                          <div className="mt-2 space-y-2">
+                            <textarea
+                              value={replyMessage}
+                              onChange={(e) => setReplyMessage(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded"
+                              rows={3}
+                              placeholder="Type your reply..."
+                            />
+                            <button
+                              onClick={() => sendReply(ticket._id)}
+                              disabled={sendingReply || replyMessage.trim() === ""}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                            >
+                              {sendingReply ? "Sending..." : "Send Reply"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                 </li>
               ))}
