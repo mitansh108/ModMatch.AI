@@ -8,6 +8,8 @@ import commentRoutes from "./routes/comment.js" // ✅ added
 import { inngest } from "./inngest/client.js"
 import { onUserSignup } from "./inngest/functions/on-signup.js"
 import { onTicketCreated } from "./inngest/functions/on-ticket.js"
+import aiRoutes from "./routes/ai.js" // ✅ Add this
+
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -32,6 +34,7 @@ app.use(express.json())
 // Routes
 app.use("/api/auth", userRoutes)
 app.use("/api/tickets", ticketRoutes)
+app.use("/api/ai", aiRoutes) // ✅ Add this line after other app.use()
 app.use("/api/tickets", commentRoutes) // ✅ comment routes mounted under same path
 
 // Inngest

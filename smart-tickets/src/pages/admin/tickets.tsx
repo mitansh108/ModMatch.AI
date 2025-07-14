@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-
-
 import {
   SidebarProvider,
   SidebarInset,
@@ -40,8 +38,13 @@ type Ticket = {
 export default function AdminTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeReply, setActiveReply] = useState<string | null>(null)
+  const [replyMessage, setReplyMessage] = useState("")
+  const [sendingReply, setSendingReply] = useState(false)
+  const [generatingAIReply, setGeneratingAIReply] = useState(false)
+
   const searchParams = useSearchParams()
-  const statusFilter = searchParams.get("status") // e.g., "open", "closed"
+  const statusFilter = searchParams.get("status")
 
   const fetchTickets = async () => {
     try {
@@ -68,42 +71,61 @@ export default function AdminTicketsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ status: "CLOSED" }), // also use uppercase to match your backend logic
-      });
-  
-      if (!res.ok) throw new Error("Failed to close ticket");
-  
-      await fetchTickets(); // refresh ticket list
-    } catch (err) {
-      console.error("Error closing ticket:", err);
-    }
-  };
-  const [activeReply, setActiveReply] = useState<string | null>(null)
-const [replyMessage, setReplyMessage] = useState("")
-const [sendingReply, setSendingReply] = useState(false)
-const sendReply = async (ticketId: string) => {
-  try {
-    setSendingReply(true)
-    const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ message: replyMessage }),
-    })
-    if (!res.ok) throw new Error("Failed to send reply")
-    setReplyMessage("")
-    setActiveReply(null)
-    await fetchTickets()
-  } catch (err) {
-    console.error("Error sending reply:", err)
-  } finally {
-    setSendingReply(false)
-  }
-}
+        body: JSON.stringify({ status: "CLOSED" }),
+      })
 
-  
+      if (!res.ok) throw new Error("Failed to close ticket")
+      await fetchTickets()
+    } catch (err) {
+      console.error("Error closing ticket:", err)
+    }
+  }
+
+  const sendReply = async (ticketId: string) => {
+    try {
+      setSendingReply(true)
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ message: replyMessage }),
+      })
+      if (!res.ok) throw new Error("Failed to send reply")
+      setReplyMessage("")
+      setActiveReply(null)
+      await fetchTickets()
+    } catch (err) {
+      console.error("Error sending reply:", err)
+    } finally {
+      setSendingReply(false)
+    }
+  }
+
+  const generateAIReply = async (notes: string) => {
+    setGeneratingAIReply(true)
+    try {
+      const res = await fetch("https://modmatch-ai.onrender.com/api/ai/generate-reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ notes }),
+      })
+
+      const data = await res.json()
+      if (res.ok && data.reply) {
+        setReplyMessage(data.reply)
+      } else {
+        console.error("AI reply failed:", data.error)
+      }
+    } catch (err) {
+      console.error("AI reply error:", err)
+    } finally {
+      setGeneratingAIReply(false)
+    }
+  }
 
   useEffect(() => {
     fetchTickets()
@@ -111,16 +133,9 @@ const sendReply = async (ticketId: string) => {
 
   const filteredTickets = tickets.filter((ticket) => {
     const normalizedStatus = ticket.status?.toLowerCase() ?? ""
-
-    if (statusFilter === "closed") {
-      return normalizedStatus === "closed"
-    }
-
-    if (statusFilter === "open") {
-      return normalizedStatus !== "closed"
-    }
-
-    return true // No filter applied, show all
+    if (statusFilter === "closed") return normalizedStatus === "closed"
+    if (statusFilter === "open") return normalizedStatus !== "closed"
+    return true
   })
 
   return (
@@ -164,9 +179,7 @@ const sendReply = async (ticketId: string) => {
                   className="rounded-xl bg-muted/50 p-5 shadow hover:bg-muted transition"
                 >
                   <h3 className="font-semibold text-lg mb-1">{ticket.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {ticket.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">{ticket.description}</p>
 
                   <div className="text-sm space-y-1">
                     <p><strong>Status:</strong> {ticket.status?.toUpperCase() ?? "Unknown"}</p>
@@ -220,13 +233,23 @@ const sendReply = async (ticketId: string) => {
                               rows={3}
                               placeholder="Type your reply..."
                             />
-                            <button
-                              onClick={() => sendReply(ticket._id)}
-                              disabled={sendingReply || replyMessage.trim() === ""}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
-                            >
-                              {sendingReply ? "Sending..." : "Send Reply"}
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => sendReply(ticket._id)}
+                                disabled={sendingReply || replyMessage.trim() === ""}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                              >
+                                {sendingReply ? "Sending..." : "Send Reply"}
+                              </button>
+
+                              <button
+                                onClick={() => generateAIReply(ticket.helpfulNotes || "")}
+                                disabled={generatingAIReply}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm"
+                              >
+                                {generatingAIReply ? "Generating..." : "Reply with AI"}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
