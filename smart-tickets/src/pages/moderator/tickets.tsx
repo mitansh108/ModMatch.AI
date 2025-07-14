@@ -52,7 +52,8 @@ export default function ModeratorTicketsPage() {
       const assignedTickets = data.filter(
         (ticket: Ticket) =>
           typeof ticket.assignedTo === "object" &&
-          ticket.assignedTo?.email === email
+          ticket.assignedTo?.email === email &&
+          ticket.status?.toLowerCase() !== "closed"
       )
 
       setTickets(assignedTickets)
