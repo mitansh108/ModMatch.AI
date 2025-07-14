@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   SidebarProvider,
@@ -37,6 +38,9 @@ export default function ModeratorTicketsPage() {
   const [sendingReply, setSendingReply] = useState(false)
   const [generatingAI, setGeneratingAI] = useState(false)
 
+  const searchParams = useSearchParams()
+  const statusFilter = searchParams.get("status")
+
   const fetchTickets = async () => {
     try {
       const res = await fetch("https://modmatch-ai.onrender.com/api/tickets", {
@@ -50,10 +54,9 @@ export default function ModeratorTicketsPage() {
       const user = JSON.parse(localStorage.getItem("user") || "{}")
       const email = user.email
 
+      // fetch all tickets assigned to this moderator
       const assignedTickets = data.filter(
-        (ticket: Ticket) =>
-          ticket.assignedTo?.email === email &&
-          ticket.status?.toLowerCase() !== "closed"
+        (ticket: Ticket) => ticket.assignedTo?.email === email
       )
 
       setTickets(assignedTickets)
@@ -63,6 +66,13 @@ export default function ModeratorTicketsPage() {
       setLoading(false)
     }
   }
+
+  const filteredTickets = tickets.filter((ticket) => {
+    const normalizedStatus = ticket.status?.toLowerCase() ?? ""
+    if (statusFilter === "closed") return normalizedStatus === "closed"
+    if (statusFilter === "open") return normalizedStatus !== "closed"
+    return true
+  })
 
   const sendReply = async (ticketId: string) => {
     try {
@@ -133,15 +143,21 @@ export default function ModeratorTicketsPage() {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-6">
-          <h2 className="text-2xl font-bold">Assigned Tickets</h2>
+          <h2 className="text-2xl font-bold">
+            {statusFilter === "closed"
+              ? "Closed Tickets"
+              : statusFilter === "open"
+              ? "Open Tickets"
+              : "All Assigned Tickets"}
+          </h2>
 
           {loading ? (
             <p>Loading tickets...</p>
-          ) : tickets.length === 0 ? (
-            <p>No tickets assigned to you.</p>
+          ) : filteredTickets.length === 0 ? (
+            <p>No tickets found.</p>
           ) : (
             <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {tickets.map((ticket) => (
+              {filteredTickets.map((ticket) => (
                 <li
                   key={ticket._id}
                   className="rounded-xl bg-muted/50 p-5 shadow hover:bg-muted transition"
