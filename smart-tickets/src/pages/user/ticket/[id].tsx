@@ -42,24 +42,23 @@ export default function TicketDetailPage() {
   const fetchTicketData = async () => {
     const token = localStorage.getItem("token")
     if (!token || !id) return
-
+  
     try {
-      // ✅ Ticket details
-const resTicket = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}`, {
-  headers: { Authorization: `Bearer ${token}` },
-})
-
-// ✅ Comments
-const resComments = await fetch(`https://modmatch-ai.onrender.com/api/comments/${id}`, {
-  headers: { Authorization: `Bearer ${token}` },
-})
-
-
+      // ✅ Fetch ticket details
+      const resTicket = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+  
+      // ✅ Fetch ticket comments (use plural: /comments)
+      const resComments = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}/comments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+  
       if (resTicket.ok) {
         const ticketData = await resTicket.json()
         setTicket(ticketData)
       }
-
+  
       if (resComments.ok) {
         const commentData = await resComments.json()
         setComments(commentData)
@@ -70,6 +69,7 @@ const resComments = await fetch(`https://modmatch-ai.onrender.com/api/comments/$
       setLoading(false)
     }
   }
+  
 
   useEffect(() => {
     if (id) fetchTicketData()
