@@ -28,13 +28,6 @@ Built with:
 
 ---
 
-## 📸 Screenshots
-
-| User Ticket Form | Admin Ticket View |
-|------------------|-------------------|
-| ![User Form](./screenshots/user-form.png) | ![Admin Panel](./screenshots/admin-panel.png) |
-
----
 
 ## 🛠️ Tech Stack
 
@@ -52,3 +45,36 @@ Built with:
 ```bash
 git clone https://github.com/your-username/modmatch.git
 cd modmatch
+
+2. Add environment variables
+
+Backend → Create a .env file in /backend:
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+
+3. Install dependencies
+# Backend
+cd backend
+npm install
+
+# Frontend
+cd ../frontend
+npm install
+
+4. Run the app
+
+In two terminals (or use concurrently):
+# Terminal 1 - Backend
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend
+cd frontend
+npm run dev
+
+
+
+
+
+
