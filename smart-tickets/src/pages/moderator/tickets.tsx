@@ -52,9 +52,7 @@ export default function ModeratorTicketsPage() {
       const assignedTickets = data.filter(
         (ticket: Ticket) =>
           typeof ticket.assignedTo === "object" &&
-          ticket.assignedTo !== null &&
-          "email" in ticket.assignedTo &&
-          ticket.assignedTo.email === email
+          ticket.assignedTo?.email === email
       )
 
       setTickets(assignedTickets)
@@ -65,41 +63,60 @@ export default function ModeratorTicketsPage() {
     }
   }
 
-  const handleReplyAndClose = async (ticketId: string) => {
-    if (!replyMessage.trim()) return
-    setSendingReply(true)
+  const sendReply = async (ticketId: string) => {
     try {
-      const token = localStorage.getItem("token")
-
-      // 1. Add comment
-      const commentRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
+      setSendingReply(true)
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({ message: replyMessage }),
       })
-      if (!commentRes.ok) throw new Error("Failed to post comment")
-
-      // 2. Close ticket
-      const closeRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: "CLOSED" }),
-      })
-      if (!closeRes.ok) throw new Error("Failed to close ticket")
+      if (!res.ok) throw new Error("Failed to send reply")
 
       setReplyMessage("")
       setActiveReply(null)
       await fetchTickets()
     } catch (err) {
-      console.error("Reply & Close failed:", err)
+      console.error("Error sending reply:", err)
     } finally {
       setSendingReply(false)
+    }
+  }
+
+  const closeTicket = async (ticketId: string) => {
+    try {
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ status: "CLOSED" }),
+      })
+      if (!res.ok) throw new Error("Failed to close ticket")
+      await fetchTickets()
+    } catch (err) {
+      console.error("Error closing ticket:", err)
+    }
+  }
+
+  const flagToAdmin = async (ticketId: string) => {
+    try {
+      const res = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ flagged: true }),
+      })
+      if (!res.ok) throw new Error("Failed to flag ticket")
+      await fetchTickets()
+    } catch (err) {
+      console.error("Error flagging ticket:", err)
     }
   }
 
@@ -169,15 +186,23 @@ export default function ModeratorTicketsPage() {
                               prev === ticket._id ? null : ticket._id
                             )
                           }
-                          className={`text-sm px-3 py-1 rounded text-white ${
-                            ticket.priority === "high"
-                              ? "bg-red-600 hover:bg-red-700"
-                              : ticket.priority === "medium"
-                              ? "bg-yellow-500 hover:bg-yellow-600"
-                              : "bg-green-600 hover:bg-green-700"
-                          }`}
+                          className="text-sm px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
                         >
-                          {activeReply === ticket._id ? "Cancel" : "Reply & Close"}
+                          {activeReply === ticket._id ? "Cancel Reply" : "Reply"}
+                        </button>
+
+                        <button
+                          onClick={() => closeTicket(ticket._id)}
+                          className="text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Close
+                        </button>
+
+                        <button
+                          onClick={() => flagToAdmin(ticket._id)}
+                          className="text-sm px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white"
+                        >
+                          Flag to Admin
                         </button>
                       </div>
 
@@ -191,11 +216,11 @@ export default function ModeratorTicketsPage() {
                             placeholder="Type your reply..."
                           />
                           <button
-                            onClick={() => handleReplyAndClose(ticket._id)}
+                            onClick={() => sendReply(ticket._id)}
                             disabled={sendingReply || replyMessage.trim() === ""}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                           >
-                            {sendingReply ? "Sending..." : "Send & Close"}
+                            {sendingReply ? "Sending..." : "Send Reply"}
                           </button>
                         </div>
                       )}
