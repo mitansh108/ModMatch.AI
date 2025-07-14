@@ -1,5 +1,5 @@
 import { inngest } from "../inngest/client.js";
-
+import Comment from "../ai-models/comment.js"
 import Ticket from "../ai-models/ticket.js"
 
 
@@ -46,14 +46,24 @@ export const getTickets = async (req, res) => {
     if (user.role !== "user") {
       tickets = await Ticket.find({})
         .populate("assignedTo", ["email", "_id"])
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
     } else {
       tickets = await Ticket.find({ createdBy: user._id })
-      .select("title description status createdAt createdBy") // 👈 This is important
-      .sort({ createdAt: -1 });
+        .select("title description status createdAt createdBy")
+        .sort({ createdAt: -1 })
+        .lean();
     }
 
-    return res.status(200).json(tickets);
+    // 👇 Add commentCount for each ticket
+    const ticketsWithCommentCounts = await Promise.all(
+      tickets.map(async (ticket) => {
+        const count = await Comment.countDocuments({ ticket: ticket._id });
+        return { ...ticket, commentCount: count };
+      })
+    );
+
+    return res.status(200).json(ticketsWithCommentCounts);
   } catch (error) {
     console.error("Error fetching tickets", error.message);
     return res.status(500).json({ message: "Internal Server Error" });
