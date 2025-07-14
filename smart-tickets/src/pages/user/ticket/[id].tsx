@@ -86,36 +86,24 @@ export default function TicketDetailPage() {
         <header className="flex h-16 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mx-2 h-4" />
-          <h2 className="text-xl font-semibold">Ticket Details</h2>
+          <h2 className="text-xl font-semibold">Discussion Thread</h2>
         </header>
-
+  
         <div className="p-6 space-y-6">
-          {/* Ticket Info */}
+          {/* Original Post (just title + description) */}
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xl font-semibold">{ticket.title}</h3>
-            <p className="text-gray-700 mt-2">{ticket.description}</p>
-            <div className="text-sm text-gray-500 mt-3 space-y-1">
-              <p>Status: {ticket.status}</p>
-              <p>Priority: {ticket.priority || "Not set"}</p>
-              <p>Helpful Notes: {ticket.helpfulNotes || "—"}</p>
-              <p>
-                Related Skills: {ticket.relatedSkills?.join(", ") || "None"}
-              </p>
-              <p>
-                Created At:{" "}
-                {ticket.createdAt
-                  ? new Date(ticket.createdAt).toLocaleString()
-                  : "Unknown"}
-              </p>
-            </div>
+            <p className="text-gray-700 mt-2 whitespace-pre-line">
+              {ticket.description}
+            </p>
           </div>
-
+  
           {/* Comments */}
           <div className="bg-white rounded shadow p-4">
             <h4 className="text-lg font-semibold mb-4">
-              Comments ({comments.length})
+              Replies ({comments.length})
             </h4>
-
+  
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500">No replies yet.</p>
             ) : (
@@ -146,4 +134,4 @@ export default function TicketDetailPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-}
+                }  
