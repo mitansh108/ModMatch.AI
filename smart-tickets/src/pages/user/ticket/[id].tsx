@@ -42,23 +42,25 @@ export default function TicketDetailPage() {
   const fetchTicketData = async () => {
     const token = localStorage.getItem("token")
     if (!token || !id) return
-  
+
     try {
-      // ✅ Fetch ticket details
-      const resTicket = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-  
-      // ✅ Fetch ticket comments (use plural: /comments)
-      const resComments = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}/comments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-  
-      if (resTicket.ok) {
-        const ticketData = await resTicket.json()
-        setTicket(ticketData)
-      }
-  
+      // ✅ Fetch ticket
+      const resTicket = await fetch(
+        `https://modmatch-ai.onrender.com/api/tickets/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      const ticketData = await resTicket.json()
+      setTicket(ticketData.ticket || ticketData) // handle both formats
+
+      // ✅ Fetch comments
+      const resComments = await fetch(
+        `https://modmatch-ai.onrender.com/api/tickets/${id}/comments`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
       if (resComments.ok) {
         const commentData = await resComments.json()
         setComments(commentData)
@@ -69,7 +71,6 @@ export default function TicketDetailPage() {
       setLoading(false)
     }
   }
-  
 
   useEffect(() => {
     if (id) fetchTicketData()
@@ -86,24 +87,24 @@ export default function TicketDetailPage() {
         <header className="flex h-16 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mx-2 h-4" />
-          <h2 className="text-xl font-semibold">Discussion Thread</h2>
+          <h2 className="text-xl font-semibold">Discussion</h2>
         </header>
-  
+
         <div className="p-6 space-y-6">
-          {/* Original Post (just title + description) */}
+          {/* Original Post (like Reddit thread) */}
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xl font-semibold">{ticket.title}</h3>
             <p className="text-gray-700 mt-2 whitespace-pre-line">
               {ticket.description}
             </p>
           </div>
-  
+
           {/* Comments */}
           <div className="bg-white rounded shadow p-4">
             <h4 className="text-lg font-semibold mb-4">
               Replies ({comments.length})
             </h4>
-  
+
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500">No replies yet.</p>
             ) : (
@@ -134,4 +135,4 @@ export default function TicketDetailPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-                }  
+}
