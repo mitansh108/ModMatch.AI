@@ -44,15 +44,16 @@ export default function TicketDetailPage() {
     if (!token || !id) return
 
     try {
-      // Fetch ticket
-      const resTicket = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      // ✅ Ticket details
+const resTicket = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}`, {
+  headers: { Authorization: `Bearer ${token}` },
+})
 
-      // Fetch comments
-      const resComments = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${id}/comment`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+// ✅ Comments
+const resComments = await fetch(`https://modmatch-ai.onrender.com/api/comments/${id}`, {
+  headers: { Authorization: `Bearer ${token}` },
+})
+
 
       if (resTicket.ok) {
         const ticketData = await resTicket.json()
