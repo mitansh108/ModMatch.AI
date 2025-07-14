@@ -16,7 +16,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
 
 type Ticket = {
   _id: string
@@ -29,7 +28,6 @@ type Ticket = {
   assignedTo: { email: string }
   createdAt?: string
 }
-
 
 export default function ModeratorTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -73,7 +71,7 @@ export default function ModeratorTicketsPage() {
     try {
       const token = localStorage.getItem("token")
 
-      // Step 1: Send reply
+      // 1. Add comment
       const commentRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}/comment`, {
         method: "POST",
         headers: {
@@ -82,10 +80,9 @@ export default function ModeratorTicketsPage() {
         },
         body: JSON.stringify({ message: replyMessage }),
       })
-
       if (!commentRes.ok) throw new Error("Failed to post comment")
 
-      // Step 2: Close the ticket
+      // 2. Close ticket
       const closeRes = await fetch(`https://modmatch-ai.onrender.com/api/tickets/${ticketId}`, {
         method: "PATCH",
         headers: {
@@ -94,7 +91,6 @@ export default function ModeratorTicketsPage() {
         },
         body: JSON.stringify({ status: "CLOSED" }),
       })
-
       if (!closeRes.ok) throw new Error("Failed to close ticket")
 
       setReplyMessage("")
@@ -132,64 +128,57 @@ export default function ModeratorTicketsPage() {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-6">
-          <h2 className="text-2xl font-bold">Your Tickets</h2>
+          <h2 className="text-2xl font-bold">Assigned Tickets</h2>
 
           {loading ? (
             <p>Loading tickets...</p>
           ) : tickets.length === 0 ? (
-            <p>No tickets found.</p>
+            <p>No tickets assigned to you.</p>
           ) : (
             <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {tickets.map((ticket) => (
                 <li
                   key={ticket._id}
-                  className="rounded-xl bg-muted/50 p-4 shadow transition"
+                  className="rounded-xl bg-muted/50 p-5 shadow hover:bg-muted transition"
                 >
-                  <h3 className="font-medium text-lg">{ticket.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{ticket.description}</p>
-                  <div className="text-sm space-y-1 mt-3">
-  <p>
-    <strong>Status:</strong>{" "}
-    {ticket.status?.toUpperCase() || "Unknown"}
-  </p>
-  <p>
-    <strong>Priority:</strong> {ticket.priority || "Not set"}
-  </p>
-  <p>
-    <strong>Helpful Notes:</strong>{" "}
-    {ticket.helpfulNotes || "—"}
-  </p>
-  <p>
-    <strong>Related Skills:</strong>{" "}
-    {ticket.relatedSkills?.join(", ") || "None"}
-  </p>
-  <p>
-    <strong>Assigned To:</strong>{" "}
-    {ticket.assignedTo?.email || "Unassigned"}
-  </p>
-  <p className="text-xs text-muted-foreground">
-    Created At:{" "}
-    {ticket.createdAt
-      ? new Date(ticket.createdAt).toLocaleString()
-      : "Unknown"}
-  </p>
-</div>
+                  <h3 className="font-semibold text-lg mb-1">{ticket.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {ticket.description}
+                  </p>
 
+                  <div className="text-sm space-y-1">
+                    <p><strong>Status:</strong> {ticket.status?.toUpperCase() ?? "Unknown"}</p>
+                    <p><strong>Priority:</strong> {ticket.priority ?? "Not set"}</p>
+                    <p><strong>Related Skills:</strong> {ticket.relatedSkills?.join(", ") || "None"}</p>
+                    <p><strong>Helpful Notes:</strong> {ticket.helpfulNotes || "—"}</p>
+                    <p><strong>Assigned To:</strong> {ticket.assignedTo?.email || "Unassigned"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Created At:{" "}
+                      {ticket.createdAt
+                        ? new Date(ticket.createdAt).toLocaleString()
+                        : "Unknown"}
+                    </p>
+                  </div>
 
                   {ticket.status?.toLowerCase() !== "closed" && (
                     <>
-                      <div className="mt-4 flex gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
                           onClick={() =>
                             setActiveReply((prev) =>
                               prev === ticket._id ? null : ticket._id
                             )
                           }
+                          className={`text-sm px-3 py-1 rounded text-white ${
+                            ticket.priority === "high"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : ticket.priority === "medium"
+                              ? "bg-yellow-500 hover:bg-yellow-600"
+                              : "bg-green-600 hover:bg-green-700"
+                          }`}
                         >
                           {activeReply === ticket._id ? "Cancel" : "Reply & Close"}
-                        </Button>
+                        </button>
                       </div>
 
                       {activeReply === ticket._id && (
@@ -201,13 +190,13 @@ export default function ModeratorTicketsPage() {
                             rows={3}
                             placeholder="Type your reply..."
                           />
-                          <Button
+                          <button
                             onClick={() => handleReplyAndClose(ticket._id)}
-                            disabled={sendingReply}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={sendingReply || replyMessage.trim() === ""}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                           >
                             {sendingReply ? "Sending..." : "Send & Close"}
-                          </Button>
+                          </button>
                         </div>
                       )}
                     </>
