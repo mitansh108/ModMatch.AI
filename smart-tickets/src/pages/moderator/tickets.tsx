@@ -23,9 +23,13 @@ type Ticket = {
   title: string
   description?: string
   status?: string
+  priority?: string
+  helpfulNotes?: string
+  relatedSkills?: string[]
   assignedTo: { email: string }
   createdAt?: string
 }
+
 
 export default function ModeratorTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -143,14 +147,34 @@ export default function ModeratorTicketsPage() {
                 >
                   <h3 className="font-medium text-lg">{ticket.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{ticket.description}</p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Status: <span className="font-medium">{ticket.status}</span>
-                    <br />
-                    Created:{" "}
-                    {ticket.createdAt
-                      ? new Date(ticket.createdAt).toLocaleString()
-                      : "Unknown"}
-                  </p>
+                  <div className="text-sm space-y-1 mt-3">
+  <p>
+    <strong>Status:</strong>{" "}
+    {ticket.status?.toUpperCase() || "Unknown"}
+  </p>
+  <p>
+    <strong>Priority:</strong> {ticket.priority || "Not set"}
+  </p>
+  <p>
+    <strong>Helpful Notes:</strong>{" "}
+    {ticket.helpfulNotes || "—"}
+  </p>
+  <p>
+    <strong>Related Skills:</strong>{" "}
+    {ticket.relatedSkills?.join(", ") || "None"}
+  </p>
+  <p>
+    <strong>Assigned To:</strong>{" "}
+    {ticket.assignedTo?.email || "Unassigned"}
+  </p>
+  <p className="text-xs text-muted-foreground">
+    Created At:{" "}
+    {ticket.createdAt
+      ? new Date(ticket.createdAt).toLocaleString()
+      : "Unknown"}
+  </p>
+</div>
+
 
                   {ticket.status?.toLowerCase() !== "closed" && (
                     <>
