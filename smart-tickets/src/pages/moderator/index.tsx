@@ -50,22 +50,18 @@ export default function ModeratorDashboardPage() {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         })
-
+  
         if (!res.ok) throw new Error("Failed to fetch tickets")
         const data = await res.json()
-
+  
         const user = JSON.parse(localStorage.getItem("user") || "{}")
         const email = user.email
-
-        // Only keep tickets assigned to the current moderator
-        const assigned = data.filter(
-            (ticket: Ticket) =>
-              typeof ticket.assignedTo === "object" &&
-              ticket.assignedTo !== null &&
-              "email" in ticket.assignedTo &&
-              ticket.assignedTo.email === email
-          )
-
+  
+        const assigned = data.filter((ticket: Ticket) => {
+          if (!ticket.assignedTo || typeof ticket.assignedTo !== "object") return false
+          return ticket.assignedTo.email === email
+        })
+  
         setTickets(assigned)
       } catch (err) {
         console.error("Error fetching moderator tickets:", err)
@@ -73,9 +69,10 @@ export default function ModeratorDashboardPage() {
         setLoading(false)
       }
     }
-
+  
     fetchTickets()
   }, [])
+  
 
   const totalTickets = tickets.length
   const closedTickets = tickets.filter((t) => t.status === "closed").length
