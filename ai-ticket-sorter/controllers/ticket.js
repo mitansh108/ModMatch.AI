@@ -1,6 +1,7 @@
-import { inngest } from "../inngest/client.js";
+// import { inngest } from "../inngest/client.js"; // Legacy: kept for rollback
 import Comment from "../ai-models/comment.js"
 import Ticket from "../ai-models/ticket.js"
+import { enqueueTicketTriage } from "../config/queue.js";
 
 
 export const createTicket = async (req, res) => {
@@ -17,15 +18,33 @@ export const createTicket = async (req, res) => {
     });
     console.log("Created ticket:", newTicket);
 
-    await inngest.send({
-      name: "ticket/created",
-      data: {
+    // ── BullMQ path (default) ──────────────────────────────────────────────
+    // Push the triage work onto Redis so the worker pool can fan it out at
+    // a Gemini-safe rate instead of hammering the API on every create.
+    try {
+      const job = await enqueueTicketTriage({
         ticketId: newTicket._id.toString(),
         title,
         description,
         createdBy: req.user._id.toString(),
-      },
-    });
+      });
+      console.log(`📨 Enqueued ticket triage job ${job.id} for ticket ${newTicket._id}`);
+    } catch (queueErr) {
+      // Don't fail the request — the ticket is already persisted. Log so
+      // ops can replay if Redis was down.
+      console.error("❌ Failed to enqueue ticket triage:", queueErr.message);
+    }
+
+    // ── Legacy Inngest path (commented out for easy rollback) ──────────────
+    // await inngest.send({
+    //   name: "ticket/created",
+    //   data: {
+    //     ticketId: newTicket._id.toString(),
+    //     title,
+    //     description,
+    //     createdBy: req.user._id.toString(),
+    //   },
+    // });
 
     return res.status(201).json({
       message: "Ticket created and processing started",
