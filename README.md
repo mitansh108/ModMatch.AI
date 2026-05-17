@@ -6,7 +6,7 @@ ModMatch is a full-stack platform that intelligently routes student support tick
 
 ---
 
-## ✨ What's inside
+## What's inside
 
 - **Role-based auth** — Admin, Moderator, and User dashboards (JWT).
 - **AI-enriched tickets** — Gemini analyses every ticket and extracts priority, helpful notes, and related skills.
@@ -19,7 +19,7 @@ ModMatch is a full-stack platform that intelligently routes student support tick
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
                                 ┌──────────────────────────────┐
